@@ -11,7 +11,6 @@ namespace ExiaServer
         /// <summary>
         /// Point d'entrée principal de l'application.
         /// </summary>
-        /// //je veux pas chopper le vih
         [STAThread]
         static void Main()
         {
