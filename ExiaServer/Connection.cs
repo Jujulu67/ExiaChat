@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -21,9 +22,26 @@ namespace ExiaServer
             SocketType.Stream,
             ProtocolType.Tcp);
             Model.Logs.coMsg = "SERVEUR ON, IP=" + ipAddress.ToString();
-
+            Logging(Model.Logs.coMsg);
+            try
+            {
+                //On lie la socket au point de communication
+                ServerSocket.Bind(new IPEndPoint(ipAddress, 8000));
+                //On la positionne en mode "écoute"
+                ServerSocket.Listen(10);
+            }
+            catch (SocketException E)
+            {
+                Console.WriteLine(E.Message);
+            }
         }
 
-
+        private void Logging(string message)
+        {
+            using (StreamWriter sw = File.AppendText("log.txt"))
+            {
+                sw.WriteLine(DateTime.Now + ": " + message);
+            }
+        }
     }
 }
