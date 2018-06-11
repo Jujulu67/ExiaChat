@@ -37,7 +37,7 @@ namespace ExiaServer.Model
                     try
 
                     {
-
+                        
                         int bytesSent = ((Socket)acceptList[i]).Send(msg, msg.Length, SocketFlags.None);
 
                     }
@@ -46,7 +46,7 @@ namespace ExiaServer.Model
 
                     {
 
-                        Console.Write(((Socket)acceptList[i]).GetHashCode() + " déconnecté");
+                        SetText(((Socket)acceptList[i]).GetHashCode() + " déconnecté", false);
 
                     }
 
@@ -71,7 +71,7 @@ namespace ExiaServer.Model
         public void sendMsg(string message)
 
         {
-
+            
             for (int i = 0; i < acceptList.Count; i++)
 
             {
@@ -87,16 +87,13 @@ namespace ExiaServer.Model
                         byte[] msg = System.Text.Encoding.UTF8.GetBytes(message);
 
                         int bytesSent = ((Socket)acceptList[i]).Send(msg, msg.Length, SocketFlags.None);
-
-                        Console.WriteLine("Writing to:" + acceptList.Count.ToString());
-
                     }
 
                     catch
 
                     {
 
-                        Console.Write(((Socket)acceptList[i]).GetHashCode() + " déconnecté");
+                        SetText(((Socket)acceptList[i]).GetHashCode() + " déconnecté",false);
 
                     }
 
@@ -120,7 +117,14 @@ namespace ExiaServer.Model
 
         private void writeToAll()
         {
-            sendMsg(msg);
+            string decodeMsg = System.Text.Encoding.UTF8.GetString(msg);
+            string pd = decodeMsg.Substring(decodeMsg.LastIndexOf(":") + 1);
+            //Condition provisoire pour ne pas afficher le message vide à chaque connexion
+            if (!pd.Equals(" "))
+            {
+                SetText(decodeMsg,true);
+                sendMsg(msg);
+            }
         }
 
         public void Logging(string message)
@@ -139,28 +143,21 @@ namespace ExiaServer.Model
                 ((Socket)acceptList[acceptList.IndexOf(Resource)]).Shutdown(SocketShutdown.Both);
                 ((Socket)acceptList[acceptList.IndexOf(Resource)]).Close();
                 acceptList.Remove(Resource);
-                Console.WriteLine("Pseudo déjà pris");
                 return false;
             }
             else
             {
                 MatchList.Add(Resource, nick);
+                sendMsg("Connexion de " + MatchList[Resource]);
+                SetText("Connexion de " + MatchList[Resource],false);
             }
             return true;
         }
         private void removeNick(Socket Resource)
         {
-            Console.Write("DECONNEXION DE:" + MatchList[Resource]);
-            msgDisconnected = ((string)MatchList[Resource]).Trim() + " vient de se déconnecter!";
-            Thread DiscInfoToAll = new Thread(new ThreadStart(infoToAll));
-            DiscInfoToAll.Start();
-            DiscInfoToAll.Join();
+            sendMsg("Déconnexion de : " + MatchList[Resource]);
+            SetText("Déconnexion de: " + MatchList[Resource], false);
             MatchList.Remove(Resource);
-        }
-
-        private void infoToAll()
-        {
-            sendMsg(msgDisconnected);
         }
 
         public void getRead()
@@ -205,7 +202,7 @@ namespace ExiaServer.Model
                                         //jamais se produire. Il peut se produire uniquement
                                         //si un client développé par quelqu'un d'autre
                                         //tente de se connecter sur le serveur.
-                                        Console.Write("Message non conforme");
+                                        SetText("Message non conforme",false);
                                         acceptList.Remove(((Socket)readList[i]));
                                         break;
                                     }
@@ -224,13 +221,10 @@ namespace ExiaServer.Model
                                     else
                                     {
                                         string rtfMessage = Nick.Trim() + " vient de se connecter";
-                                        log.coMsg = rtfMessage;
+                                        //SetText(rtfMessage, false);
                                     }
                                 }
-                                if (useLogging)
-                                {
-                                    Logging(formattedMsg);
-                                }
+                               
                                 //Démarrage du thread renvoyant le message à tous les clients
                                 Thread forwardingThread = new Thread(new ThreadStart(writeToAll));
                                 forwardingThread.Start();
@@ -261,7 +255,6 @@ namespace ExiaServer.Model
                     {
                         if (!readLock)
                         {
-                            log.coMsg ="Client " + ((Socket)acceptList[i]).GetHashCode() + " déconnecté";
                             removeNick(((Socket)acceptList[i]));
                             ((Socket)acceptList[i]).Close();
                             acceptList.Remove(((Socket)acceptList[i]));
@@ -299,9 +292,10 @@ namespace ExiaServer.Model
             }
         }
 
-        public void SetText(string text)
+        public void SetText(string text, bool bo)
         {
             log.coMsg = text;
+            if (bo) Logging(text);
             Notify(text);
         }
 

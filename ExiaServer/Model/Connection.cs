@@ -27,21 +27,23 @@ namespace ExiaServer.Model
 
         public void Waiting()
         {
-            SetText("Attente d'une nouvelle connexion...");
             //L'exécution du thread courant est bloquée jusqu'à ce qu'un
             //nouveau client se connecte
             CurrentClient = ServerSocket.Accept();
-            SetText("Nouveau client:" + CurrentClient.GetHashCode());
+            
             //Stockage de la ressource dans l'arraylist acceptlist
             acceptList.Add(CurrentClient);
+
+            Thread w = new Thread(new ThreadStart(Waiting));
+            w.Start();
         }
         
         public void Initialize()
         {
             //Récupération de l'IP du serveur
             ipAddress = ipHostEntry.AddressList[0];
-            SetText("SERVEUR ON, IP=" + ipAddress.ToString());
-            Logging(log.coMsg);
+            SetText("SERVEUR ON, IP=" + ipAddress.ToString(),false);
+          
             try
             {
                 //On lie la socket au point de communication
